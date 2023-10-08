@@ -5,6 +5,7 @@
 //
 
 import UIKit
+import CoreData
 
 class ColorsViewController: UIViewController {
     
@@ -17,15 +18,12 @@ class ColorsViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        addColors()
-        loadReorderedColors()
         configureColorTableViewCell()
         configureDescriptionTextView()
         configureNavbarButton()
-    }
-    
-    func addColors() {
-        colors = ColorsStruct.allColors
+        fetchSavedColors()
+        loadReorderedColors()
+     
     }
     
     func addColor(_ color: ColorModel) {
@@ -68,6 +66,7 @@ class ColorsViewController: UIViewController {
         let orderedColorIDs = getColorsElementID()
         UserDefaultsUtilities.shared.saveReorderedColors(colors: orderedColorIDs)
     }
+
     
     func loadReorderedColors() {
         if let orderedColorIDs = UserDefaultsUtilities.shared.loadReorderedColors() {
@@ -83,6 +82,7 @@ class ColorsViewController: UIViewController {
             tableView.reloadData()
         }
     }
+
     
     
     
@@ -110,6 +110,32 @@ class ColorsViewController: UIViewController {
             }
         }
     }
+    
+    func fetchSavedColors() {
+        let context = CoreDataStack.shared.viewContext
+        let fetchRequest: NSFetchRequest<ColorList> = ColorList.fetchRequest()
+
+        do {
+            let savedColors = try context.fetch(fetchRequest)
+
+            // Convert the fetched Core Data objects to ColorModel objects
+            let colorModels = savedColors.map { coreDataColor -> ColorModel in
+                return ColorModel(
+                    colorValue: coreDataColor.colorValue ?? "",
+                    name: coreDataColor.name ?? "",
+                    description: coreDataColor.descriptionColor ?? "",
+                    id: coreDataColor.id ?? ""
+                )
+            }
+
+            // Assign the fetched colors to your colors array
+            colors = colorModels
+        } catch {
+            print("Error fetching saved colors: \(error)")
+        }
+    }
+
+
 
 
 }
@@ -118,13 +144,14 @@ extension ColorsViewController: NewColorViewControllerDelegate {
     func newColorViewController(_ viewController: NewColorViewController, didAddNewColor color: ColorModel) {
         // Add the new color to your data source
         addColor(color)
-        
+
         // Reload the table view to reflect the new color
         tableView.reloadData()
         
-        
+        // Save the reordered colors
         saveReorderedColors()
     }
+
 }
 
 
@@ -163,18 +190,19 @@ extension ColorsViewController: UITableViewDelegate, UITableViewDataSource {
     
     //Functions that reorder and remove cells
     //Allows reordering of cells
+    // Allows reordering of cells
     func tableView(_ tableView: UITableView, canMoveRowAt indexPath: IndexPath) -> Bool {
         return true
     }
-    
-    // Allows cell to be reorders to another place
+
+    // Allows cell to be reordered to another place
     func tableView(_ tableView: UITableView, moveRowAt sourceIndexPath: IndexPath, to destinationIndexPath: IndexPath) {
-        let item = colors[sourceIndexPath.row] // let the item equal to the index that is going to be reordered in colors
-        colors.remove(at: sourceIndexPath.row) // the chosen index will be removed
-        colors.insert(item, at: destinationIndexPath.row) // and reordered in the destination that the user chose
+        let movedColor = colors.remove(at: sourceIndexPath.row)
+        colors.insert(movedColor, at: destinationIndexPath.row)
         
-        saveReorderedColors() // save colors after being reordered
+        saveReorderedColors()
     }
+
     
     // removes the delete button that shows by default
     func tableView(_ tableView: UITableView, editingStyleForRowAt indexPath: IndexPath) -> UITableViewCell.EditingStyle {

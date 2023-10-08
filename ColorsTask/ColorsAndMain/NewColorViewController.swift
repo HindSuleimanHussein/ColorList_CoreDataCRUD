@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import CoreData
 
 protocol NewColorViewControllerDelegate: AnyObject {
     func newColorViewController(_ viewController: NewColorViewController, didAddNewColor color: ColorModel)
@@ -80,19 +81,28 @@ class NewColorViewController: UIViewController {
             }
             
             let hexToString = hexString(from: tintColor)
-            
+
+            // Create a new ColorList managed object and set its properties
+            let context = CoreDataStack.shared.viewContext
+            let newColorList = ColorList(context: context)
+            newColorList.colorValue = hexToString
+            newColorList.name = text
+            newColorList.descriptionColor = descriptionText
+            newColorList.id = text
+
+            // Save the managed object context
+            CoreDataStack.shared.saveContext()
+
             let newColor = ColorModel(colorValue: hexToString, name: text, description: descriptionText, id: text)
             delegate?.newColorViewController(self, didAddNewColor: newColor)
-            
-        if let colorsViewController = colorsViewController {
+
+            if let colorsViewController = colorsViewController {
                 print("Navigating back to ColorsViewController")
                 navigationController?.popToViewController(colorsViewController, animated: true)
             } else {
                 print("colorsViewController is nil")
             }
-            
-                
-    }
+        }
     
     func hexString(from color: UIColor) -> String {
         guard let components = color.cgColor.components else {
@@ -105,6 +115,8 @@ class NewColorViewController: UIViewController {
         
         return String(format: "%02X%02X%02X", red, green, blue)
     }
+
+
 
 
 
