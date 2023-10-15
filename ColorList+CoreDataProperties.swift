@@ -2,7 +2,7 @@
 //  ColorList+CoreDataProperties.swift
 //  ColorsTask
 //
-//  Created by Foothill on 04/10/2023.
+//  Created by Foothill on 09/10/2023.
 //
 //
 
@@ -20,6 +20,7 @@ extension ColorList {
     @NSManaged public var descriptionColor: String?
     @NSManaged public var id: String?
     @NSManaged public var name: String?
+    @NSManaged public var order: Int16
 
 }
 

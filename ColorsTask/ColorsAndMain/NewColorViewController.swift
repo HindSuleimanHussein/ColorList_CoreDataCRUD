@@ -88,7 +88,8 @@ class NewColorViewController: UIViewController {
             newColorList.colorValue = hexToString
             newColorList.name = text
             newColorList.descriptionColor = descriptionText
-            newColorList.id = text
+            newColorList.id = UUID().uuidString
+
 
             // Save the managed object context
             CoreDataStack.shared.saveContext()

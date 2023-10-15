@@ -16,7 +16,7 @@
                         <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <tableView clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="-1" estimatedRowHeight="-1" sectionHeaderHeight="-1" estimatedSectionHeaderHeight="-1" sectionFooterHeight="-1" estimatedSectionFooterHeight="-1" translatesAutoresizingMaskIntoConstraints="NO" id="ogn-v8-wCX">
+                            <tableView clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" allowsMultipleSelection="YES" rowHeight="-1" estimatedRowHeight="-1" sectionHeaderHeight="-1" estimatedSectionHeaderHeight="-1" sectionFooterHeight="-1" estimatedSectionFooterHeight="-1" translatesAutoresizingMaskIntoConstraints="NO" id="ogn-v8-wCX">
                                 <rect key="frame" x="0.0" y="0.0" width="393" height="500"/>
                                 <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                                 <constraints>
@@ -73,6 +73,9 @@
                                                 <buttonConfiguration key="configuration" style="plain" image="trash" catalog="system">
                                                     <color key="baseForegroundColor" name="Red"/>
                                                 </buttonConfiguration>
+                                                <connections>
+                                                    <action selector="trashColor:" destination="cSW-9W-L5J" eventType="touchUpInside" id="Q6a-so-ONs"/>
+                                                </connections>
                                             </button>
                                         </subviews>
                                         <constraints>
@@ -151,13 +154,13 @@
                         </constraints>
                         <variation key="default">
                             <mask key="constraints">
+                                <exclude reference="DzG-oL-cbR"/>
                                 <exclude reference="0YY-T6-BRB"/>
                                 <exclude reference="9GU-Lz-6la"/>
                                 <exclude reference="Uc9-TX-qOM"/>
                                 <exclude reference="cck-Gb-poh"/>
                                 <exclude reference="dxB-Eg-sfe"/>
                                 <exclude reference="jPH-s2-qAg"/>
-                                <exclude reference="DzG-oL-cbR"/>
                                 <exclude reference="3bD-8t-wuh"/>
                                 <exclude reference="TtQ-RK-9ag"/>
                                 <exclude reference="bnJ-dr-bOW"/>
@@ -169,10 +172,10 @@
                         </variation>
                         <variation key="heightClass=compact">
                             <mask key="constraints">
+                                <include reference="DzG-oL-cbR"/>
                                 <include reference="Uc9-TX-qOM"/>
                                 <include reference="dxB-Eg-sfe"/>
                                 <include reference="jPH-s2-qAg"/>
-                                <include reference="DzG-oL-cbR"/>
                                 <include reference="bnJ-dr-bOW"/>
                                 <include reference="kDy-Vk-Xxw"/>
                                 <include reference="rqB-gG-d9I"/>
@@ -202,6 +205,7 @@
                     <simulatedToolbarMetrics key="simulatedBottomBarMetrics"/>
                     <connections>
                         <outlet property="ViewColor" destination="mvL-iw-oa9" id="67T-fD-QoG"/>
+                        <outlet property="deleteButton" destination="zQC-Yw-XOr" id="HSP-Cc-4SW"/>
                         <outlet property="descriptionTextView" destination="Db5-x1-pFb" id="ad2-5M-zhR"/>
                         <outlet property="editBarButton" destination="LUs-Cc-rTG" id="GVw-q2-xsD"/>
                         <outlet property="tableView" destination="ogn-v8-wCX" id="4i1-b7-UJ1"/>

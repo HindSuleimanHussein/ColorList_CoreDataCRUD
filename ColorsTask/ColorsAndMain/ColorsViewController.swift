@@ -14,8 +14,12 @@ class ColorsViewController: UIViewController {
     @IBOutlet weak var descriptionTextView: UITextView!
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var editBarButton: UIBarButtonItem!
-    var colors: [ColorModel] = []
+    @IBOutlet weak var deleteButton: UIButton!
     
+    var colors: [ColorModel] = []
+    var isEditingMode = false
+    var selectedIndexPaths: [IndexPath] = []
+
     override func viewDidLoad() {
         super.viewDidLoad()
         configureColorTableViewCell()
@@ -23,24 +27,26 @@ class ColorsViewController: UIViewController {
         configureNavbarButton()
         fetchSavedColors()
         loadReorderedColors()
-     
+        
     }
     
     func addColor(_ color: ColorModel) {
         colors.append(color)
         print("Added color: \(color.name)")
         print("Updated colors array: \(colors)")
+        
     }
-
-
     
+
     func configureColorTableViewCell() {
         let nib = UINib(nibName: ColorTableViewCell.colorTableViewCell, bundle: nil)
-        tableView.register(nib, forCellReuseIdentifier:  ColorTableViewCell.colorTableViewCell)
+        tableView.register(nib, forCellReuseIdentifier: ColorTableViewCell.colorTableViewCell)
         tableView.delegate = self
         tableView.dataSource = self
-        tableView.isEditing = false
+        tableView.allowsSelectionDuringEditing = true // Enable cell selection during editing
     }
+
+
     
     func configureDescriptionTextView() {
         descriptionTextView.textContainerInset = UIEdgeInsets(top: 0, left: 20.0, bottom: 0, right: 40.0)
@@ -63,41 +69,113 @@ class ColorsViewController: UIViewController {
     }
     
     func saveReorderedColors() {
-        let orderedColorIDs = getColorsElementID()
-        UserDefaultsUtilities.shared.saveReorderedColors(colors: orderedColorIDs)
-    }
-
-    
-    func loadReorderedColors() {
-        if let orderedColorIDs = UserDefaultsUtilities.shared.loadReorderedColors() {
-            // Reorder the colors based on the loaded order of IDs
-            colors.sort { (color1, color2) -> Bool in
-                guard let index1 = orderedColorIDs.firstIndex(of: color1.id),
-                      let index2 = orderedColorIDs.firstIndex(of: color2.id) else {
-                    return false // Handle missing IDs gracefully
+        let context = CoreDataStack.shared.viewContext
+        context.perform {
+            for (index, color) in self.colors.enumerated() {
+                if let colorList = ColorList.findColorList(withID: color.id, inContext: context) {
+                    colorList.order = Int16(index)
                 }
-                return index1 < index2
             }
             
-            tableView.reloadData()
+            do {
+                try context.save()
+            } catch {
+                print("Error saving reordered colors: \(error)")
+            }
         }
     }
-
     
-    
-    
+    func loadReorderedColors() {
+        let context = CoreDataStack.shared.viewContext
+        let fetchRequest: NSFetchRequest<ColorList> = ColorList.fetchRequest()
+        
+        let sortDescriptor = NSSortDescriptor(key: "order", ascending: true)
+        fetchRequest.sortDescriptors = [sortDescriptor]
+        
+        do {
+            let reorderedColors = try context.fetch(fetchRequest)
+            
+            // Clear the existing colors array
+            colors.removeAll()
+            
+            // Convert the fetched Core Data objects to ColorModel objects
+            let colorModels = reorderedColors.map { coreDataColor -> ColorModel in
+                return ColorModel(
+                    colorValue: coreDataColor.colorValue ?? "",
+                    name: coreDataColor.name ?? "",
+                    description: coreDataColor.descriptionColor ?? "",
+                    id: coreDataColor.id ?? ""
+                )
+            }
+            
+            // Assign the fetched colors to your colors array
+            colors = colorModels
+        } catch {
+            print("Error fetching reordered colors: \(error)")
+        }
+    }
     
     @IBAction func edit(_ sender: Any) {
-        tableView.isEditing = !tableView.isEditing
+        isEditingMode.toggle()
         
-        switch tableView.isEditing {
-        case true:
+        if isEditingMode {
             editBarButton.title = Constants.Conts.editButtonText.doneText
-        case false:
+            tableView.isEditing = true
+    
+        } else {
             editBarButton.title = Constants.Conts.editButtonText.editText
+            tableView.isEditing = false
+            
+            selectedIndexPaths.removeAll()
+            print(selectedIndexPaths)
+            
         }
         
+        // Reload the table view to apply changes to cell images
+        tableView.reloadData()
+        
     }
+    
+    
+    @IBAction func trashColor(_ sender: Any) {
+        // Ensure you are in editing mode and there are selected index paths
+            guard isEditingMode, !selectedIndexPaths.isEmpty else {
+                return
+            }
+
+            // Get the index paths to delete
+            let indexesToDelete = selectedIndexPaths
+
+            // Update Core Data
+            let context = CoreDataStack.shared.viewContext
+            context.perform {
+                for indexPath in indexesToDelete {
+                    let colorToDelete = self.colors[indexPath.row]
+                    if let colorList = ColorList.findColorList(withID: colorToDelete.id, inContext: context) {
+                        context.delete(colorList)
+                    }
+                }
+
+                do {
+                    try context.save()
+                } catch {
+                    print("Error deleting colors: \(error)")
+                }
+
+                // Update the colors array
+                self.colors = self.colors.enumerated()
+                    .filter { index, _ in !indexesToDelete.contains { $0.row == index } }
+                    .map { _, color in color }
+
+                // Clear the selectedIndexPaths
+                self.selectedIndexPaths.removeAll()
+
+                // Reload the table view
+                self.tableView.reloadData()
+            }
+    }
+    
+    
     @IBAction func addButtonTapped(_ sender: Any) {
         performSegue(withIdentifier: Constants.Conts.identifiersForSegue.toNewColorViewController, sender: nil)
     }
@@ -114,10 +192,12 @@ class ColorsViewController: UIViewController {
     func fetchSavedColors() {
         let context = CoreDataStack.shared.viewContext
         let fetchRequest: NSFetchRequest<ColorList> = ColorList.fetchRequest()
-
+        
         do {
             let savedColors = try context.fetch(fetchRequest)
-
+            // Clear the existing colors array
+            colors.removeAll()
+            
             // Convert the fetched Core Data objects to ColorModel objects
             let colorModels = savedColors.map { coreDataColor -> ColorModel in
                 return ColorModel(
@@ -127,31 +207,33 @@ class ColorsViewController: UIViewController {
                     id: coreDataColor.id ?? ""
                 )
             }
-
+            
             // Assign the fetched colors to your colors array
             colors = colorModels
         } catch {
             print("Error fetching saved colors: \(error)")
         }
     }
-
-
-
-
+    
+    
+    
+    
+    
+    
 }
 
 extension ColorsViewController: NewColorViewControllerDelegate {
     func newColorViewController(_ viewController: NewColorViewController, didAddNewColor color: ColorModel) {
         // Add the new color to your data source
         addColor(color)
-
+        
         // Reload the table view to reflect the new color
         tableView.reloadData()
         
         // Save the reordered colors
         saveReorderedColors()
     }
-
+    
 }
 
 
@@ -169,23 +251,46 @@ extension ColorsViewController: UITableViewDelegate, UITableViewDataSource {
         cell.myLabel.text = color.name
         cell.detailTextLabel?.text = color.description
         cell.backgroundColor = color.getUIColor()
+        cell.myImage.isHidden = !isEditingMode
+
+        
+        // Configure the cell for editing mode and selection
+        cell.configureCellForEditing(isEditing: isEditingMode, isSelected: selectedIndexPaths.contains(indexPath))
+        
+        
         
         return cell
     }
+
     
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        // Get the selected color
-        let selectedColor = colors[indexPath.row]
-        
-        // Update ViewColor with the selected color
-        ViewColor.backgroundColor = selectedColor.getUIColor()
-        
-        // Show the description of the selected color
-        let description = selectedColor.description
-        descriptionTextView.text = description // Update the label's text
-        
-        
+        if isEditingMode {
+            // Toggle the selection state
+            if let index = selectedIndexPaths.firstIndex(of: indexPath) {
+                selectedIndexPaths.remove(at: index)
+            } else {
+                selectedIndexPaths.append(indexPath)
+            }
+            
+            // Reload the selected cell to update the image
+            tableView.reloadRows(at: [indexPath], with: .automatic)
+        } else {
+            
+            let selectedColor = colors[indexPath.row]
+            ViewColor.backgroundColor = selectedColor.getUIColor()
+            
+            let description = selectedColor.description
+            descriptionTextView.text = description
+            
+        }
+    }
+
+    
+    func tableView(_ tableView: UITableView, didDeselectRowAt indexPath: IndexPath) {
+        let cell = tableView.cellForRow(at: indexPath) as! ColorTableViewCell
+        cell.isChecked = false
+        cell.myImage.image = UIImage(systemName: "circle")
     }
     
     //Functions that reorder and remove cells
@@ -194,7 +299,7 @@ extension ColorsViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, canMoveRowAt indexPath: IndexPath) -> Bool {
         return true
     }
-
+    
     // Allows cell to be reordered to another place
     func tableView(_ tableView: UITableView, moveRowAt sourceIndexPath: IndexPath, to destinationIndexPath: IndexPath) {
         let movedColor = colors.remove(at: sourceIndexPath.row)
@@ -202,13 +307,28 @@ extension ColorsViewController: UITableViewDelegate, UITableViewDataSource {
         
         saveReorderedColors()
     }
-
+    
     
     // removes the delete button that shows by default
     func tableView(_ tableView: UITableView, editingStyleForRowAt indexPath: IndexPath) -> UITableViewCell.EditingStyle {
         return .none
     }
     
+}
+
+extension ColorList {
+    static func findColorList(withID id: String, inContext context: NSManagedObjectContext) -> ColorList? {
+        let fetchRequest: NSFetchRequest<ColorList> = ColorList.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "id == %@", id)
+        
+        do {
+            let results = try context.fetch(fetchRequest)
+            return results.first
+        } catch {
+            print("Error fetching ColorList: \(error)")
+            return nil
+        }
+    }
 }
 
 
