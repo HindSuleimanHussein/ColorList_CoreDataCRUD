@@ -204,11 +204,11 @@
                     </navigationItem>
                     <simulatedToolbarMetrics key="simulatedBottomBarMetrics"/>
                     <connections>
-                        <outlet property="ViewColor" destination="mvL-iw-oa9" id="67T-fD-QoG"/>
                         <outlet property="deleteButton" destination="zQC-Yw-XOr" id="HSP-Cc-4SW"/>
                         <outlet property="descriptionTextView" destination="Db5-x1-pFb" id="ad2-5M-zhR"/>
                         <outlet property="editBarButton" destination="LUs-Cc-rTG" id="GVw-q2-xsD"/>
                         <outlet property="tableView" destination="ogn-v8-wCX" id="4i1-b7-UJ1"/>
+                        <outlet property="viewColor" destination="mvL-iw-oa9" id="mEI-Th-vsp"/>
                         <segue destination="sjj-DB-gnO" kind="show" identifier="toNewColorViewController" id="FlG-9M-83w"/>
                     </connections>
                 </viewController>

@@ -8,26 +8,26 @@
 import UIKit
 
 class ColorTableViewCell: UITableViewCell {
-    
-    static let colorTableViewCell = "ColorTableViewCell"
-    @IBOutlet var myLabel: UILabel!
-    @IBOutlet weak var myImage: UIImageView!
-    
-    var isChecked = false
+    @IBOutlet private var myLabel: UILabel!
+    @IBOutlet private weak var myImage: UIImageView!
     
     override func awakeFromNib() {
         super.awakeFromNib()
     }
     
-    func configureCellForEditing(isEditing: Bool, isSelected: Bool) {
+    func configureCell(_ color: ColorModel, isEditing: Bool, isSelected: Bool) {
+        myLabel.text = color.name
+        backgroundColor = color.colorValue
+        myImage.isHidden = !isEditing
+        
         if isEditing {
-            // Check if the cell is selected and set the image accordingly
-            myImage.image = isSelected ? UIImage(systemName: "checkmark.circle.fill") : UIImage(systemName: "circle")
+            myImage.image = isSelected ? UIImage(systemName: Constants.SystemNameImage.checkmarkCircleImage) : UIImage(systemName: Constants.SystemNameImage.circleImage)
         } else {
-            // Configure the cell differently when not editing
-            // For example, you can set the image to a default state
-            myImage.image = UIImage(systemName: "circle")
+            myImage.image = UIImage(systemName: Constants.SystemNameImage.circleImage)
         }
     }
     
+    func deselectCell(){
+        myImage.image = UIImage(systemName: Constants.SystemNameImage.circleImage)
+    }
 }

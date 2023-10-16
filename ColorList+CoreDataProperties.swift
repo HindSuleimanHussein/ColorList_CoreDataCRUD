@@ -2,7 +2,7 @@
 //  ColorList+CoreDataProperties.swift
 //  ColorsTask
 //
-//  Created by Foothill on 09/10/2023.
+//  Created by Foothill on 25/10/2023.
 //
 //
 
@@ -16,7 +16,7 @@ extension ColorList {
         return NSFetchRequest<ColorList>(entityName: "ColorList")
     }
 
-    @NSManaged public var colorValue: String?
+    @NSManaged public var colorValue: NSObject?
     @NSManaged public var descriptionColor: String?
     @NSManaged public var id: String?
     @NSManaged public var name: String?

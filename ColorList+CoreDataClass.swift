@@ -2,7 +2,7 @@
 //  ColorList+CoreDataClass.swift
 //  ColorsTask
 //
-//  Created by Foothill on 09/10/2023.
+//  Created by Foothill on 25/10/2023.
 //
 //
 
